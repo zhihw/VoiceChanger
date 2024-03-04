@@ -1,7 +1,7 @@
 import pyaudio
 import numpy as np
 import keyboard
-
+import sounddevice as sd
 def record_voice():
     audio = pyaudio.PyAudio()
     
@@ -18,3 +18,14 @@ def record_voice():
             break
         data = stream.read(1024, exception_on_overflow=False)
         frames.append(np.frombuffer(data, dtype=np.int16))
+    stream.stop_stream()
+    stream.close()
+    audio.terminate()
+    
+    audio_data = np.concatenate(frames)
+    
+    return 44100, audio_data  
+
+rate, data = record_voice()  
+sd.play(data, rate) 
+sd.wait()  
