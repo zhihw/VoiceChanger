@@ -25,7 +25,20 @@ def record_voice():
     audio_data = np.concatenate(frames)
     
     return 44100, audio_data  
+def wav_generater(data):
+    pass #生成wav
 
+def remove_noise(data):
+    pass #预处理，消除噪音，返回处理后的声音数据
+
+def analyze_audio(data):
+    pass #分析声音性别，返回性别通过bool
+
+def change_gender(data):
+    pass #改变声音性别
+
+def play_audio(data):
+    pass #播放音频，实现进度条
 rate, data = record_voice()  
 sd.play(data, rate) 
 sd.wait()  
