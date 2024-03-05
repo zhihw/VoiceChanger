@@ -2,6 +2,7 @@ import pyaudio
 import numpy as np
 import keyboard
 import sounddevice as sd
+import scipy.signal as ss
 from datetime import datetime
 from scipy.io import wavfile
 def record_voice():
@@ -26,7 +27,7 @@ def record_voice():
     
     audio_data = np.concatenate(frames)
     
-    return 44100, audio_data  
+    return audio_data  
 
 def wav_generater(data):
     data = data.astype(np.int16)
@@ -36,7 +37,14 @@ def wav_generater(data):
     print(f"File saved as vc_current time")
 
 def remove_noise(data):
-    pass #预处理，消除噪音，返回处理后的声音数据
+    data = data / np.max(np.abs(data))#normalized data
+    
+    sos = ss.butter(4, [300,3400], btype='band', fs=44100, output='sos')
+    data = ss.sosfilt(sos, data)#Use bandpass filters to reduce noise
+
+    data = data * np.max(np.abs(data))
+    return data.astype(np.int16)
+    #后续可以添加谱减法继续降噪
 
 def analyze_audio(data):
     pass #分析声音性别，返回性别通过bool
@@ -46,7 +54,8 @@ def change_gender(data):
 
 def play_audio(data):
     pass #播放音频，实现进度条
-rate, data = record_voice()  
-sd.play(data, rate) 
+data = record_voice() 
+data = remove_noise(data) 
+sd.play(data) 
 sd.wait()  
 wav_generater(data)
