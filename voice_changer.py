@@ -2,6 +2,8 @@ import pyaudio
 import numpy as np
 import keyboard
 import sounddevice as sd
+from datetime import datetime
+from scipy.io import wavfile
 def record_voice():
     audio = pyaudio.PyAudio()
     
@@ -25,8 +27,13 @@ def record_voice():
     audio_data = np.concatenate(frames)
     
     return 44100, audio_data  
+
 def wav_generater(data):
-    pass #生成wav
+    data = data.astype(np.int16)
+    current_time = datetime.now().strftime("%Y%m%d-%H%M")
+    filename = f"vc_{current_time}.wav"
+    wavfile.write(filename, 44100, data) #The wav files generated each time are in vc_currenttime format
+    print(f"File saved as vc_current time")
 
 def remove_noise(data):
     pass #预处理，消除噪音，返回处理后的声音数据
@@ -42,3 +49,4 @@ def play_audio(data):
 rate, data = record_voice()  
 sd.play(data, rate) 
 sd.wait()  
+wav_generater(data)
