@@ -5,6 +5,7 @@ import sounddevice as sd
 import scipy.signal as ss
 from datetime import datetime
 from scipy.io import wavfile
+import librosa as lr
 def record_voice():
     audio = pyaudio.PyAudio()
     
@@ -15,6 +16,7 @@ def record_voice():
                         frames_per_buffer=1024)
     frames=[]
     print("Recording started. Press 'Esc' key to stop recording.")
+    
     while True:
         if keyboard.is_pressed('esc'):  
             print("Recording stopped.")
@@ -37,17 +39,30 @@ def wav_generater(data):
     print(f"File saved as vc_current time")
 
 def remove_noise(data):
-    data = data / np.max(np.abs(data))#normalized data
+    normalized_data = data / np.max(np.abs(data))#normalized data
     
     sos = ss.butter(4, [300,3400], btype='band', fs=44100, output='sos')
-    data = ss.sosfilt(sos, data)#Use bandpass filters to reduce noise
+    filtered_data = ss.sosfilt(sos, normalized_data)#Use bandpass filters to reduce noise
 
-    data = data * np.max(np.abs(data))
-    return data.astype(np.int16)
+    restored_data = filtered_data * np.max(np.abs(data))
+    return restored_data.astype(np.int16)
     #后续可以添加谱减法继续降噪
 
 def analyze_audio(data):
-    pass #分析声音性别，返回性别通过bool
+    data = data.astype(float)
+    
+    f0, voiced_flag, voiced_probs = lr.pyin(data, fmin=80, fmax=400, sr=44100)
+    pitches = f0[voiced_flag]
+    avg_pitch = np.mean(pitches) if len(pitches) > 0 else 0
+    
+    spectral_centroids = lr.feature.spectral_centroid(y=data, sr=44100)
+    avg_centroid = np.mean(spectral_centroids)
+    
+    if avg_pitch > 165 and avg_centroid > 1500:
+        gender = "Female"
+    else:
+        gender = "Male"
+    return gender
 
 def change_gender(data):
     pass #改变声音性别
@@ -56,6 +71,7 @@ def play_audio(data):
     pass #播放音频，实现进度条
 data = record_voice() 
 data = remove_noise(data) 
+print(analyze_audio(data))
 sd.play(data) 
 sd.wait()  
 wav_generater(data)
