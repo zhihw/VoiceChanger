@@ -97,7 +97,7 @@ def analyze_audio(data):
         #Calculate the average spectral centroid
         
         low_pitch_thres = 80
-        high_pitch_thres = 250
+        high_pitch_thres = 300
 
         if avg_pitch < low_pitch_thres or avg_pitch > high_pitch_thres:
             print("\nDetected unusual pitch.")
@@ -130,7 +130,7 @@ def change_gender(data, sr=44100):
     try:
         low_pitch_thres=80
         high_pitch_thres=250
-        male_target_pitch = 130
+        male_target_pitch = 115
         female_target_pitch = 170
         gender, avg_pitch = analyze_audio(data)
 
@@ -143,13 +143,19 @@ def change_gender(data, sr=44100):
             if avg_pitch < low_pitch_thres or avg_pitch > high_pitch_thres:
                 n_steps = 8
             else: 
-                n_steps = 12 * np.log2(female_target_pitch / avg_pitch)
+                base_n_steps = 5  
+                pitch_diff = avg_pitch - male_target_pitch  
+                n_steps_adjustment = pitch_diff / 100  
+                n_steps = base_n_steps + n_steps_adjustment
             s_rate = 0.9
         elif gender == 'Female':
             if avg_pitch < low_pitch_thres or avg_pitch > high_pitch_thres:
                 n_steps = -8
             else:
-                n_steps = 12 * np.log2(male_target_pitch / avg_pitch)
+                base_n_steps = -5  
+                pitch_diff = avg_pitch - male_target_pitch  
+                n_steps_adjustment = pitch_diff / 100  
+                n_steps = base_n_steps - n_steps_adjustment
             s_rate = 1.1
 
         # Perform pitch shifting
@@ -160,8 +166,8 @@ def change_gender(data, sr=44100):
         if gender == 'Male':
             data_stretched = high_pass_filter(data_stretched, sr, cutoff=500)
         elif gender == 'Female':
-            data_stretched = low_pass_filter(data_stretched, sr, cutoff=500) 
-        return data_stretched.astype(np.int16)
+            data_stretched = low_pass_filter(data_stretched, sr, cutoff=1500) 
+        return data_stretched.astype(np.int16),n_steps
 
     except Exception as e:
         print(f"An error occurred while changing voice gender: {str(e)}")
@@ -170,31 +176,25 @@ def change_gender(data, sr=44100):
 
 def play_audio(data, sr=44100):
     try:
-        duration = len(data) / sr  # 计算音频播放的总时长（秒）
-        sd.play(data, sr)  # 开始播放音频
+        duration = len(data) / sr  
+        sd.play(data, sr)  
 
-        start_time = time.time()  # 记录开始播放的时间
+        start_time = time.time()  
         while True:
             current_time = time.time()
             elapsed_time = current_time - start_time
-
-            # 计算播放进度
             progress = elapsed_time / duration
             if progress >= 1.0:
-                break  # 当进度达到或超过100%时，退出循环
-
-            # 绘制进度条
-            progress_bar_length = 50  # 进度条的长度
+                break  
+            
+            progress_bar_length = 50  
             filled_length = int(progress_bar_length * progress)
             bar = '█' * filled_length + '-' * (progress_bar_length - filled_length)
             print(f'\rAudio Playback: |{bar}| {progress * 100:.2f}%', end='\r')
-
-            time.sleep(0.1)  # 每0.1秒刷新一次进度条
-
-        # 确保在退出循环时，进度条显示为 100%
+            time.sleep(0.1)  
         bar = '█' * progress_bar_length
         print(f'\rAudio Playback: |{bar}| 100.00%', end='\r')
-        sd.wait()  # 等待音频播放完成
+        sd.wait()  
         print('\nAudio playback completed.')
     except Exception as e:
         print(f"An error occurred while playing audio: {str(e)}")
@@ -208,7 +208,8 @@ while True:
             continue
         elif analysis_result[0] is not None:
             print(analysis_result)
-            data = change_gender(data)
-            play_audio(data,44100)
+            data,n = change_gender(data)
+            print(n)
+            play_audio(data)
             wav_generater(data)
             break
