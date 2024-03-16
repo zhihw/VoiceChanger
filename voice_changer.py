@@ -47,17 +47,31 @@ def wav_generater(data):
     except Exception as e:
         print(f"An error occurred while generating WAV file: {str(e)}")
 
+def low_pass_filter(signal, sr, cutoff):
+    try:
+        sos = ss.butter(10, cutoff, fs=sr, btype='low', output='sos')
+        filtered_signal = ss.sosfilt(sos, signal)
+        return filtered_signal
+    except Exception as e:
+        print(f"An error occurred in low_pass_filter: {str(e)}")
+
+def high_pass_filter(signal, sr, cutoff):
+    try:
+        sos = ss.butter(10, cutoff, fs=sr, btype='high', output='sos')
+        filtered_signal = ss.sosfilt(sos, signal)
+        return filtered_signal
+    except Exception as e:
+        print(f"An error occurred in high_pass_filter: {str(e)}")
+
 def remove_noise(data):
     try:
         normalized_data = data / np.max(np.abs(data))
         #Normalize the data
         
-        sos_high = ss.butter(4, 300, btype='highpass', fs=44100, output='sos')
-        filtered_data1 = ss.sosfilt(sos_high, normalized_data)
+        filtered_data1 = high_pass_filter(normalized_data, 44100, cutoff=300)
         #High pass filter to remove low-frequency noise
         
-        sos_low = ss.butter(4, 3400, btype='lowpass', fs=44100, output='sos')
-        filtered_data2 = ss.sosfilt(sos_low, filtered_data1)
+        filtered_data2 = low_pass_filter(filtered_data1, 44100, cutoff=3400)
         #Low pass filter to remove high-frequency noise
         
         restored_data = filtered_data2 * np.max(np.abs(data))
@@ -110,7 +124,8 @@ def analyze_audio(data):
     except Exception as e:
         print(f"An error occurred while analyzing audio: {str(e)}")
         return None, None
-    
+
+
 def change_gender(data, sr=44100):
     try:
         low_pitch_thres=80
@@ -119,7 +134,7 @@ def change_gender(data, sr=44100):
         female_target_pitch = 170
         gender, avg_pitch = analyze_audio(data)
 
-        if gender is None or avg_pitch is 0:
+        if gender is None or avg_pitch == 0:
             print("Audio analysis failed or returned None. Unable to change gender.")
             return data.astype(np.int16)
        
@@ -142,10 +157,14 @@ def change_gender(data, sr=44100):
         #Shift pitch
         data_stretched = lr.effects.time_stretch(data_shifted, rate=s_rate)
         #Stretch time
+        if gender == 'Male':
+            data_stretched = high_pass_filter(data_stretched, sr, cutoff=500)
+        elif gender == 'Female':
+            data_stretched = low_pass_filter(data_stretched, sr, cutoff=500) 
         return data_stretched.astype(np.int16)
 
     except Exception as e:
-        print(f"An error occurred while change_gender: {str(e)}")
+        print(f"An error occurred while changing voice gender: {str(e)}")
         raise e
 
 
