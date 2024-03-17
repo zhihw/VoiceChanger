@@ -99,7 +99,7 @@ while True:
                                 data = vc.remove_noise(original_data)
                                 c_data=vc.child_effect(data)
                                 vc.play_audio(c_data)
-                                vc.wav_generater(r_data,"Child")
+                                vc.wav_generater(c_data,"Child")
                             else:
                                 print("Please use Voice data processing input data first")
                                 break
