@@ -20,6 +20,7 @@ def wav_generater(data):
     except Exception as e:
         print(f"An error occurred while generating WAV file: {str(e)}")
 
+
 def read_wav_file(filename):
     #Read wav file
     try:
@@ -30,24 +31,26 @@ def read_wav_file(filename):
         print(f"An error occurred while reading WAV file: {str(e)}")
         return None
 
-def low_pass_filter(signal, sr, cutoff):
+
+def low_pass_filter(data, sr, cutoff):
     #Low pass filter
     try:
         sos = ss.butter(10, cutoff, fs=sr, btype='low', output='sos')
-        filtered_data = ss.sosfilt(sos, signal)
+        filtered_data = ss.sosfilt(sos, data)
         return filtered_data
     except Exception as e:
         print(f"An error occurred in low_pass_filter: {str(e)}")
 
-def high_pass_filter(signal, sr, cutoff):
+def high_pass_filter(data, sr, cutoff):
     #High pass filter
     try:
         sos = ss.butter(10, cutoff, fs=sr, btype='high', output='sos')
-        filtered_data = ss.sosfilt(sos, signal)
+        filtered_data = ss.sosfilt(sos, data)
         return filtered_data
     except Exception as e:
         print(f"An error occurred in high_pass_filter: {str(e)}")
     
+
 def record_voice():
     #This function records the input sound data in mono and at a sampling rate of 44100. 
     #It reads 1024 frames of data from the audio stream each time until the user presses the Esc key to stop recording.
@@ -78,7 +81,35 @@ def record_voice():
         return audio_data
     except Exception as e:
         print(f"An error occurred while recording: {str(e)}")
-        
+
+
+def play_audio(data, sr=44100):
+    #Use sounddevice play and wait to play sounds and simulate the effect of the progress bar.
+    try:
+        duration = len(data) / sr  
+        sd.play(data, sr)  
+
+        start_time = time.time()  
+        while True:
+            current_time = time.time()
+            elapsed_time = current_time - start_time
+            progress = elapsed_time / duration
+            if progress >= 1.0:
+                break  
+            
+            progress_bar_length = 50  
+            filled_length = int(progress_bar_length * progress)
+            bar = '█' * filled_length + '-' * (progress_bar_length - filled_length)
+            print(f'\rPlay Audio: |{bar}| {progress * 100:.2f}%', end='\r')
+            time.sleep(0.1)  
+        bar = '█' * progress_bar_length
+        print(f'\rPlay Audio: |{bar}| 100.00%', end='\r')
+        sd.wait()  
+        print('\ncompleted.')
+    except Exception as e:
+        print(f"An error occurred while playing audio: {str(e)}")
+
+
 def remove_noise(data):
     #The frequency range from 300 Hz to 3400 Hz is the standard frequency bandwidth for human voice communication. This function will filter out irrelevant sounds based on this range.
     try:
@@ -98,6 +129,7 @@ def remove_noise(data):
     
     except Exception as e:
         print(f"An error occurred while removing noise: {str(e)}")
+
 
 def analyze_audio(data):
  #The function determines the gender of the voice by analyzing the pitch and spectral centroid, calculating the average pitch of the voiced frames and the average spectral centroid of the audio.
@@ -199,38 +231,46 @@ def change_gender(data, sr=44100):
     except Exception as e:
         print(f"An error occurred while changing voice gender: {str(e)}")
         raise e
+    
 
 
-def play_audio(data, sr=44100):
-    #Use sounddevice play and wait to play sounds and simulate the effect of the progress bar.
-    try:
-        duration = len(data) / sr  
-        sd.play(data, sr)  
+def robot_effect(data, mod_freq=270):
+    #Simulate the effect of electronic or mechanical sounds by adding modulated sine waves to the original sound.
 
-        start_time = time.time()  
-        while True:
-            current_time = time.time()
-            elapsed_time = current_time - start_time
-            progress = elapsed_time / duration
-            if progress >= 1.0:
-                break  
-            
-            progress_bar_length = 50  
-            filled_length = int(progress_bar_length * progress)
-            bar = '█' * filled_length + '-' * (progress_bar_length - filled_length)
-            print(f'\rPlay Audio: |{bar}| {progress * 100:.2f}%', end='\r')
-            time.sleep(0.1)  
-        bar = '█' * progress_bar_length
-        print(f'\rPlay Audio: |{bar}| 100.00%', end='\r')
-        sd.wait()  
-        print('\ncompleted.')
-    except Exception as e:
-        print(f"An error occurred while playing audio: {str(e)}")
+    gender, avg_pitch = analyze_audio(data)
+    if gender is None or avg_pitch == 0:
+        print("Audio analysis failed or returned None. Unable to add robot effect.")
+        return data.astype(np.int16)
+    
+    target_pitch = (130 + 240) / 2  
+    pitch_diff = target_pitch - avg_pitch
+    n_steps = pitch_diff / 30
+    neutral_voice = lr.effects.pitch_shift(data.astype(float), sr=44100, n_steps=n_steps)
+    #Dynamically defining n_steps values makes the audio sound relatively neutral
 
+    t = np.arange(len(neutral_voice)) / 44100
+    robot_mod = 0.8 * np.sin(2 * np.pi * mod_freq * t) + 0.2#Ensure that the amplitude range is between 0 and 1
+    robot_voice = np.multiply(neutral_voice, robot_mod)
+    #Generates a sine wave that modulates the signal with slight fluctuations and applies it point by point to the data to simulate a mechanical feel.
+    
+    return robot_voice.astype(np.int16)
+
+
+def child_effect(data):
+    #Make your sound younger with pitch adjustment and high-pass filter
+    
+    child_voice = lr.effects.pitch_shift(data.astype(np.float32), sr=44100, n_steps=4)
+    #Adjust the pitch upward to achieve a younger-sounding effect
+
+    filtered_data = high_pass_filter(child_voice, sr=44100, cutoff=800)
+    #Make the sound brighter with a high-pass filter
+
+    return filtered_data.astype(np.int16)
 
 
 while True:
-    data=read_wav_file("lmed.wav")
+    data=read_wav_file("llow.wav")
+    #play_audio(data)
     #data=record_voice()
     #wav_generater(data)
     if data is not None:
@@ -240,8 +280,9 @@ while True:
             continue
         elif analysis_result[0] is not None:
             print(analysis_result)
-            data,n = change_gender(data)
-            print(n)
+            data =  child_effect(data)
+            
+           
             while(1):
                 play_audio(data)
                 #wav_generater(data)
