@@ -9,12 +9,12 @@ from datetime import datetime
 from scipy.io import wavfile
 
 
-def wav_generater(data):
+def wav_generater(data, s):
     #Generate wav file using data
     try:
         data = data.astype(np.int16)
         current_time = datetime.now().strftime("%Y%m%d-%H%M")
-        filename = f"vc_{current_time}.wav"
+        filename = f"{s}_{current_time}.wav"
         wavfile.write(filename, 44100, data)
         print(f"File saved as {filename}")
     except Exception as e:
@@ -157,7 +157,7 @@ def analyze_audio(data):
             print("\nDetected unusual pitch.")
             print("If you want the best voice changer effect, please use a normal speaking voice.")
             print("If you have already spoken normally and the system cannot determine your gender, please enter your gender ('Male' or 'Female').")
-            print("If you did not speak normally, please say 'Retry' to delete the previous recording and start a new voice recording:")
+            print("If you did not speak normally, Please input 'Retry' to return to the previous menu and try again use Voice data processing input data: ")
             
             while True:
                 user_input = input().capitalize()
@@ -180,7 +180,7 @@ def analyze_audio(data):
         return None, None
 
 
-def change_gender(data, sr=44100):
+def change_gender(data, sr=44100, gender=None, avg_pitch=0):
     #This function uses pitch shifting and time stretching techniques to simulate the voice characteristics of another gender, in addition to using filters to enhance the effect. 
     #The number of steps for pitch shifting has a base value, which is then fine-tuned dynamically based on the target pitch and the current pitch. 
     #The time stretch ratio, however, is fixed.
@@ -190,7 +190,6 @@ def change_gender(data, sr=44100):
         high_pitch_thres=300
         male_target_pitch = 130
         female_target_pitch = 240
-        gender, avg_pitch = analyze_audio(data)
 
         if gender is None or avg_pitch == 0:
             print("Audio analysis failed or returned None. Unable to change gender.")
@@ -226,7 +225,7 @@ def change_gender(data, sr=44100):
         #Use a high-pass filter to filter low-frequency sounds and further emphasize high-frequency sounds
         elif gender == 'Female':
             data_stretched = low_pass_filter(data_stretched, sr, cutoff=2000) 
-        return data_stretched.astype(np.int16),n_steps
+        return data_stretched.astype(np.int16)
         #Use a low-pass filter to filter high-frequency sounds and further emphasize low-frequency sounds
     except Exception as e:
         print(f"An error occurred while changing voice gender: {str(e)}")
@@ -234,56 +233,44 @@ def change_gender(data, sr=44100):
     
 
 
-def robot_effect(data, mod_freq=270):
+def robot_effect(data, mod_freq=270, gender=None, avg_pitch=0):
     #Simulate the effect of electronic or mechanical sounds by adding modulated sine waves to the original sound.
 
-    gender, avg_pitch = analyze_audio(data)
-    if gender is None or avg_pitch == 0:
-        print("Audio analysis failed or returned None. Unable to add robot effect.")
-        return data.astype(np.int16)
+    try:
+        if gender is None or avg_pitch == 0:
+            print("Audio analysis failed or returned None. Unable to add robot effect.")
+            return data.astype(np.int16)
     
-    target_pitch = (130 + 240) / 2  
-    pitch_diff = target_pitch - avg_pitch
-    n_steps = pitch_diff / 30
-    neutral_voice = lr.effects.pitch_shift(data.astype(float), sr=44100, n_steps=n_steps)
-    #Dynamically defining n_steps values makes the audio sound relatively neutral
+        target_pitch = (130 + 240) / 2  
+        pitch_diff = target_pitch - avg_pitch
+        n_steps = pitch_diff / 30
+        neutral_voice = lr.effects.pitch_shift(data.astype(float), sr=44100, n_steps=n_steps)
+        #Dynamically defining n_steps values makes the audio sound relatively neutral
 
-    t = np.arange(len(neutral_voice)) / 44100
-    robot_mod = 0.8 * np.sin(2 * np.pi * mod_freq * t) + 0.2#Ensure that the amplitude range is between 0 and 1
-    robot_voice = np.multiply(neutral_voice, robot_mod)
-    #Generates a sine wave that modulates the signal with slight fluctuations and applies it point by point to the data to simulate a mechanical feel.
+        t = np.arange(len(neutral_voice)) / 44100
+        robot_mod = 0.8 * np.sin(2 * np.pi * mod_freq * t) + 0.2#Ensure that the amplitude range is between 0 and 1
+        robot_voice = np.multiply(neutral_voice, robot_mod)
+        #Generates a sine wave that modulates the signal with slight fluctuations and applies it point by point to the data to simulate a mechanical feel.
     
-    return robot_voice.astype(np.int16)
+        return robot_voice.astype(np.int16)
+    
+    except Exception as e:
+        print(f"An error occurred while adding robot_effect: {str(e)}")
+        raise e
 
 
 def child_effect(data):
     #Make your sound younger with pitch adjustment and high-pass filter
     
-    child_voice = lr.effects.pitch_shift(data.astype(np.float32), sr=44100, n_steps=4)
-    #Adjust the pitch upward to achieve a younger-sounding effect
+    try:
+        child_voice = lr.effects.pitch_shift(data.astype(np.float32), sr=44100, n_steps=4)
+        #Adjust the pitch upward to achieve a younger-sounding effect
 
-    filtered_data = high_pass_filter(child_voice, sr=44100, cutoff=800)
-    #Make the sound brighter with a high-pass filter
+        filtered_data = high_pass_filter(child_voice, sr=44100, cutoff=800)
+        #Make the sound brighter with a high-pass filter
 
-    return filtered_data.astype(np.int16)
-
-
-while True:
-    data=read_wav_file("llow.wav")
-    #play_audio(data)
-    #data=record_voice()
-    #wav_generater(data)
-    if data is not None:
-        data = remove_noise(data)
-        analysis_result = analyze_audio(data)
-        if analysis_result[0] == 'Retry':
-            continue
-        elif analysis_result[0] is not None:
-            print(analysis_result)
-            data =  child_effect(data)
-            
-           
-            while(1):
-                play_audio(data)
-                #wav_generater(data)
-            break
+        return filtered_data.astype(np.int16)
+    
+    except Exception as e:
+        print(f"An error occurred while adding child_effect: {str(e)}")
+        raise e
