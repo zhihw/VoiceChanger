@@ -22,7 +22,7 @@ Execute the program by running:
    ```
 ## Testing the Application
 
-To ensure the Voice Changer Application works as expected, we have included a set of unit tests. These tests cover the core functionalities of the application, including audio processing and effect application. 
+To make sure the voice changer application works as expected, I've included a set of test scripts. Since the audio effect requires manual judgment of the test results, unittest was not used in this test.
 
 ### Running Tests
 
@@ -31,7 +31,7 @@ Make sure you have all dependencies installed as mentioned in the [Building and 
 To execute the tests, navigate to the project directory in your terminal and run:
 
    ```bash
-   python -m unittest unittest.py
+   python test.py
    ```
 
 ### Example of recording audio and applying a robot effect
