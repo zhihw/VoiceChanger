@@ -14,8 +14,9 @@ The application operates by capturing audio input through a microphone or import
    ```bash
    pip install pyaudio numpy keyboard sounddevice scipy librosa datetime
 
-## Running the Application
+### Running the Application
 Navigate to the directory containing `main.py` and `voice_changer.py`.  
 Execute the program by running:  
 ```bash
 python main.py
+
