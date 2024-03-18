@@ -20,3 +20,20 @@ Execute the program by running:
 ```bash
 python main.py
 
+### Example of Operation
+
+```bash
+# Example of recording audio and applying a robot effect
+> python main.py
+[1] Record Voice
+[2] Import WAV File
+> 1
+"Recording... Press 'Esc' to stop."
+"Recording stopped."
+[1] Original
+[2] Gender Transformation
+[3] Robot Effect
+[4] Child Voice
+> 3
+"Applying Robot Effect... Done."
+
