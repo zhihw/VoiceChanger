@@ -180,7 +180,7 @@ def analyze_audio(data):
         return None, None
 
 
-def change_gender(data, sr=44100, gender=None, avg_pitch=0):
+def change_gender(data, gender=None, avg_pitch=0):
     #This function uses pitch shifting and time stretching techniques to simulate the voice characteristics of another gender, in addition to using filters to enhance the effect. 
     #The number of steps for pitch shifting has a base value, which is then fine-tuned dynamically based on the target pitch and the current pitch. 
     #The time stretch ratio, however, is fixed.
@@ -221,10 +221,10 @@ def change_gender(data, sr=44100, gender=None, avg_pitch=0):
         data_stretched = lr.effects.time_stretch(data_shifted, rate=s_rate)
         #Stretch time
         if gender == 'Male':
-            data_stretched = high_pass_filter(data_stretched, sr, cutoff=500)
+            data_stretched = high_pass_filter(data_stretched, 44100, cutoff=500)
         #Use a high-pass filter to filter low-frequency sounds and further emphasize high-frequency sounds
         elif gender == 'Female':
-            data_stretched = low_pass_filter(data_stretched, sr, cutoff=2000) 
+            data_stretched = low_pass_filter(data_stretched, 44100, cutoff=2000) 
         return data_stretched.astype(np.int16)
         #Use a low-pass filter to filter high-frequency sounds and further emphasize low-frequency sounds
     except Exception as e:
