@@ -34,7 +34,8 @@ To execute the tests, navigate to the project directory in your terminal and run
    python test.py
    ```
 
-### Example of recording audio and applying a robot effect
+### Examples of using the software
+   Example of adding a robot effect to a recorded voice
    ```bash
    > python main.py
    Welcome to the main menu
