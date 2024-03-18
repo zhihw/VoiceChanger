@@ -67,5 +67,8 @@ Currently, the program faces two main issues: processing speed and accuracy of s
 
 In addition, the current sound effect processing method is to mechanically adjust the audio data. Although it can produce a certain voice changing effect, it is still far from the naturalness of the human voice. If possible, I would like to explore using deep learning model technology to create a more effective voice changer application.
 
+## License
+
+This project is licensed under the MIT License - see the [LICENSE.txt](LICENSE.txt) file for details.
 
 
