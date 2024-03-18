@@ -83,11 +83,11 @@ def record_voice():
         print(f"An error occurred while recording: {str(e)}")
 
 
-def play_audio(data, sr=44100):
+def play_audio(data):
     #Use sounddevice play and wait to play sounds and simulate the effect of the progress bar.
     try:
-        duration = len(data) / sr  
-        sd.play(data, sr)  
+        duration = len(data) / 44100 
+        sd.play(data, 44100)  
 
         start_time = time.time()  
         while True:
@@ -216,7 +216,7 @@ def change_gender(data, gender=None, avg_pitch=0):
             s_rate = 1.1
 
         # Perform pitch shifting
-        data_shifted = lr.effects.pitch_shift(data.astype(float), sr=sr, n_steps=n_steps)
+        data_shifted = lr.effects.pitch_shift(data.astype(float), sr=44100, n_steps=n_steps)
         #Shift pitch
         data_stretched = lr.effects.time_stretch(data_shifted, rate=s_rate)
         #Stretch time
