@@ -37,17 +37,27 @@ To execute the tests, navigate to the project directory in your terminal and run
 ### Example of recording audio and applying a robot effect
    ```bash
    > python main.py
+   Welcome to the main menu
+   [1] Voice data processing
+   [2] Sound processing and playback
+   > 1
    [1] Record Voice
    [2] Import WAV File
    > 1
    "Recording... Press 'Esc' to stop."
    "Recording stopped."
+   Welcome to the main menu
+   [1] Voice data processing
+   [2] Sound processing and playback
+   > 2
    [1] Original
    [2] Gender Transformation
    [3] Robot Effect
    [4] Child Voice
    > 3
-   "Applying Robot Effect... Done."
+   "Play Audio: |██████████████████████----------------------------| 44.98%"
+   "completed."
+   "File saved as Robot_20240317-1826.wav"
    ```
 
 ### Reflections
